@@ -16,7 +16,8 @@ GEMINI_API_KEY = os.getenv("AIzaSyAqKenzaNi4udgTtEhofXLR99KqPt05BmM")
 FRONTEND_URL = os.getenv("http://localhost:5173")
 SUPABASE_URL = os.getenv("https://gwanvqkoiwhiquithzxf.supabase.co")
 SUPABASE_KEY = os.getenv("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3YW52cWtvaXdoaXF1aXRoenhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyMDg2NTUsImV4cCI6MjA3Mzc4NDY1NX0.5RSl2YuG0x7DCeqdHq_edrZVzu9CN0BDH69ZovEdAKY")
-FLASK_SECRET_KEY = os.getenv("5466fb330c42cb6d76d3fe3fc2b4bbaa", os.urandom(24)) # Use Render's key, or a random one for local
+FLASK_SECRET_KEY = os.getenv("5466fb330c42cb6d76d3fe3fc2b4bbaa", os.urandom(24)) 
+
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
@@ -33,7 +34,7 @@ SCOPES = [
     'https://www.googleapis.com/auth/calendar.readonly', 'https://www.googleapis.com/auth/gmail.readonly'
 ]
 
-# --- Routes (The logic inside is identical) ---
+# --- Routes ---
 @app.route('/login')
 def login():
     google = OAuth2Session(CLIENT_ID, scope=SCOPES, redirect_uri=REDIRECT_URI)
@@ -68,7 +69,7 @@ def profile():
     user_info = google.get('https://www.googleapis.com/oauth2/v1/userinfo').json()
     email = user_info.get('email', 'User')
 
-    # ... (The rest of the logic for fetching data and calling the AI is exactly the same)
+    # Fetch Calendar Events
     timezone = pytz.timezone('Asia/Kolkata')
     now = datetime.datetime.now(timezone)
     time_min_dt = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -83,17 +84,44 @@ def profile():
     if not events:
         event_text = "No events scheduled."
     else:
-        # ... processing logic ...
+        for event in events:
+            summary = event.get('summary', 'No Title')
+            start_info = event.get('start', {})
+            if 'dateTime' in start_info:
+                dt_object = datetime.datetime.fromisoformat(start_info['dateTime'])
+                display_time = dt_object.strftime('%I:%M %p')
+                event_details.append(f"- {summary} at {display_time}")
+            else:
+                event_details.append(f"- {summary} (All day)")
         event_text = "\n".join(event_details)
 
+    # Fetch Important Emails
     gmail_api_url = "https://www.googleapis.com/gmail/v1/users/me/messages"
-    # ... processing logic ...
+    query = "in:inbox category:primary newer_than:1d {subject:booking OR subject:confirmation OR subject:flight OR subject:order}"
+    params = {"q": query, "maxResults": 5}
+    gmail_response = google.get(gmail_api_url, params=params).json()
+    messages = gmail_response.get('messages', [])
+    
+    email_subjects = []
+    if messages:
+        for message in messages:
+            msg_data = google.get(f"{gmail_api_url}/{message['id']}?format=metadata&metadataHeaders=subject").json()
+            subject_header = next((header for header in msg_data['payload']['headers'] if header['name'].lower() == 'subject'), None)
+            if subject_header:
+                email_subjects.append(f"- {subject_header['value']}")
+    
     email_text = "\n".join(email_subjects) if email_subjects else "No important emails found in the last 24 hours."
 
+    # Create the AI Prompt
     prompt = f"""
-    You are Orchestrate AI...
+    You are Orchestrate AI, a helpful and friendly personal assistant for {email}.
+    Your task is to provide a short, conversational summary of their day.
+    Combine information from their calendar and important emails into a single, helpful briefing.
+    Start with a friendly greeting.
+
     Here are today's calendar events:
     {event_text}
+
     Here are the subjects of important emails from the last 24 hours:
     {email_text}
     """
@@ -109,6 +137,3 @@ def profile():
         "email": email,
         "briefing": ai_summary
     }
-
-
-After you've updated `app.py`, pushed it to GitHub, and added all the environment variables on Render, you are ready to click **`Create Web Service`**.
