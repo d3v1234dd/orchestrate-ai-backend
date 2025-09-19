@@ -8,30 +8,33 @@ from flask_cors import CORS
 from requests_oauthlib import OAuth2Session
 from supabase import create_client, Client
 
-# --- Configuration (Reads all secrets from Render's Environment Variables) ---
+# --- Configuration (DEBUGGING: Hardcoding Supabase keys to find the issue) ---
+# Your Supabase keys are temporarily placed here for this test.
+SUPABASE_URL = "https://gwanvqkoiwhiquithzxf.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3YW52cWtvaXdoaXF1aXRoenhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyMDg2NTUsImV4cCI6MjA3Mzc4NDY1NX0.5RSl2YuG0x7DCeqdHq_edrZVzu9CN0BDH69ZovEdAKY"
+
+# The rest are still read securely from Environment Variables
 CLIENT_ID = os.getenv("950227819866-f1tv7vd3u2eils74s2k3an7gru5pvbfe.apps.googleusercontent.com")
 CLIENT_SECRET = os.getenv("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")
 REDIRECT_URI = os.getenv("http://localhost:5000/callback")
 GEMINI_API_KEY = os.getenv("AIzaSyAqKenzaNi4udgTtEhofXLR99KqPt05BmM")
 FRONTEND_URL = os.getenv("http://localhost:5173")
-SUPABASE_URL = os.getenv("https://gwanvqkoiwhiquithzxf.supabase.co")
-SUPABASE_KEY = os.getenv("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3YW52cWtvaXdoaXF1aXRoenhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyMDg2NTUsImV4cCI6MjA3Mzc4NDY1NX0.5RSl2YuG0x7DCeqdHq_edrZVzu9CN0BDH69ZovEdAKY")
 FLASK_SECRET_KEY = os.getenv("5466fb330c42cb6d76d3fe3fc2b4bbaa")
 
 # --- App Setup ---
 app = Flask(__name__)
-app.secret_key = FLASK_SECRET_KEY
-CORS(app, origins=[FRONTEND_URL], supports_credentials=True)
-genai.configure(api_key=GEMINI_API_KEY)
+app.secret_key = 5466fb330c42cb6d76d3fe3fc2b4bbaa
+CORS(app, origins=[http://localhost:5173], supports_credentials=True)
+genai.configure(api_key=AIzaSyAqKenzaNi4udgTtEhofXLR99KqPt05BmM)
+# This will now work because the variables are hardcoded above
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# --- Scopes ---
+# --- (The rest of the file is identical) ---
 SCOPES = [
     'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile',
     'https://www.googleapis.com/auth/calendar.readonly', 'https://www.googleapis.com/auth/gmail.readonly'
 ]
 
-# --- Routes ---
 @app.route('/login')
 def login():
     google = OAuth2Session(CLIENT_ID, scope=SCOPES, redirect_uri=REDIRECT_URI)
@@ -66,7 +69,6 @@ def profile():
     user_info = google.get('https://www.googleapis.com/oauth2/v1/userinfo').json()
     email = user_info.get('email', 'User')
 
-    # Fetch Calendar Events
     timezone = pytz.timezone('Asia/Kolkata')
     now = datetime.datetime.now(timezone)
     time_min_dt = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -92,7 +94,6 @@ def profile():
                 event_details.append(f"- {summary} (All day)")
         event_text = "\n".join(event_details)
 
-    # Fetch Important Emails
     gmail_api_url = "https://www.googleapis.com/gmail/v1/users/me/messages"
     query = "in:inbox category:primary newer_than:1d {subject:booking OR subject:confirmation OR subject:flight OR subject:order}"
     params = {"q": query, "maxResults": 5}
@@ -109,7 +110,6 @@ def profile():
     
     email_text = "\n".join(email_subjects) if email_subjects else "No important emails found in the last 24 hours."
 
-    # Create the AI Prompt
     prompt = f"""You are Orchestrate AI, a helpful and friendly personal assistant for {email}. Your task is to provide a short, conversational summary of their day. Combine information from their calendar and important emails into a single, helpful briefing. Start with a friendly greeting.
 
 Here are today's calendar events:
