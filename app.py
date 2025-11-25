@@ -10,22 +10,22 @@ from supabase import create_client, Client
 
 # --- Configuration (DEBUGGING: Hardcoding Supabase keys to find the issue) ---
 # Your Supabase keys are temporarily placed here for this test.
-SUPABASE_URL = "https://gwanvqkoiwhiquithzxf.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3YW52cWtvaXdoaXF1aXRoenhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyMDg2NTUsImV4cCI6MjA3Mzc4NDY1NX0.5RSl2YuG0x7DCeqdHq_edrZVzu9CN0BDH69ZovEdAKY"
+SUPABASE_URL = "https://aks--------------.supabase.co"
+SUPABASE_KEY = "askjsfsdufsdlfj----------------------------------------------------------------------------------------"
 
 # The rest are still read securely from Environment Variables
-CLIENT_ID = os.getenv("950227819866-f1tv7vd3u2eils74s2k3an7gru5pvbfe.apps.googleusercontent.com")
-CLIENT_SECRET = os.getenv("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")
+CLIENT_ID = os.getenv("95-------------------------------------------------------------.apps.googleusercontent.com")
+CLIENT_SECRET = os.getenv("GO--------------------------------------------------------")
 REDIRECT_URI = os.getenv("http://localhost:5000/callback")
-GEMINI_API_KEY = os.getenv("AIzaSyAqKenzaNi4udgTtEhofXLR99KqPt05BmM")
+GEMINI_API_KEY = os.getenv("AI----------------------------------------------------------------------------------")
 FRONTEND_URL = os.getenv("http://localhost:5173")
-FLASK_SECRET_KEY = os.getenv("5466fb330c42cb6d76d3fe3fc2b4bbaa")
+FLASK_SECRET_KEY = os.getenv("54------------------------------------------------")
 
 # --- App Setup ---
 app = Flask(__name__)
-app.secret_key = 5466fb330c42cb6d76d3fe3fc2b4bbaa
+app.secret_key = --------------------------------------------------
 CORS(app, origins=[http://localhost:5173], supports_credentials=True)
-genai.configure(api_key=AIzaSyAqKenzaNi4udgTtEhofXLR99KqPt05BmM)
+genai.configure(api_key=AI----------------------------------------------------------)
 # This will now work because the variables are hardcoded above
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -128,4 +128,5 @@ Here are the subjects of important emails from the last 24 hours:
     return {
         "email": email,
         "briefing": ai_summary
+
     }
